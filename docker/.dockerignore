@@ -1,0 +1,22 @@
+# ── 파이썬 캐시 · 편집기 파일
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.DS_Store
+.idea/
+.vscode/
+
+# ── 가상환경 · 빌드 산출물
+.env/
+.venv/
+build/
+dist/
+wheels/
+
+# ── VCS
+.git/
+
+# ── 출력 · 민감 데이터
+out/
+secrets/

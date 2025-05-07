@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>{{ report.meeting_title }}</title>
+<style>
+body { font-family: "Noto Sans KR", sans-serif; margin: 2rem; line-height: 1.6; }
+h1, h2 { margin-top: 0; }
+.page-break { page-break-after: always; }
+</style>
+</head>
+<body>
+
+<h1>{{ report.meeting_title }}</h1>
+
+<h2>Executive Summary</h2>
+<p>{{ report.executive_summary }}</p>
+
+<h2>Agenda Key Points</h2>
+<ol>
+  {% for p in report.agenda_keypoints %}
+  <li>{{ p }}</li>
+  {% endfor %}
+</ol>
+
+<h2>Decisions</h2>
+<ul>
+  {% for d in report.decisions %}
+  <li>{{ d }}</li>
+  {% endfor %}
+</ul>
+
+<h2>Action Items</h2>
+<ul>
+  {% for a in report.action_items %}
+  <li>{{ a }}</li>
+  {% endfor %}
+</ul>
+
+<h2>Risks & Mitigations</h2>
+<ul>
+  {% for r in report.risks %}
+  <li>{{ r }}</li>
+  {% endfor %}
+</ul>
+
+<div class="page-break"></div>
+
+<h2>Appendix – Source Documents</h2>
+<ol>
+  {% for doc in report.appendix %}
+  <li>{{ doc }}</li>
+  {% endfor %}
+</ol>
+
+</body>
+</html>

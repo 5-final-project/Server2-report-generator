@@ -1,0 +1,39 @@
+secrets:                       # Compose-native secrets
+  api_key:
+    file: ./secrets/api_key
+  chunk_api:
+    file: ./secrets/chunk_api
+  vector_api:
+    file: ./secrets/vector_api
+  llm_api:
+    file: ./secrets/llm_api
+
+services:
+  reportgen:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+
+    # 입력·출력 디렉터리
+    volumes:
+      - ./data:/opt/app/data:ro    # STT 입력
+      - ./out:/opt/app/out         # PDF 출력
+
+    # 시크릿 마운트
+    secrets:
+      - api_key
+      - chunk_api
+      - vector_api
+      - llm_api
+
+    # DNS 서버 직접 지정 → loclx.io 같은 외부 도메인도 해 resolving 실패 방지
+    dns:
+      - 8.8.8.8          # Google Public DNS
+      - 1.1.1.1          # Cloudflare DNS
+
+    # 로컬 호스트(Windows/macOS) 접속용 별칭
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    environment:
+      PYTHONUNBUFFERED: "1"
