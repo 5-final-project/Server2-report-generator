@@ -18,13 +18,13 @@
 graph TD;
     A[STT 결과] --> B[영어 청크];
     B --> C[한국어 청크];
-    C --> D[요약 + 문서 검색];
+    C --> D[요약 및 문서 검색];
     C --> E[벡터 검색];
-    D --> F[관련 문서 집합];
+    D --> F[관련 문서];
     E --> F;
     F --> G[보고서 JSON 생성];
-    G --> H[HTML 보고서 (Jinja2)];
-    H --> I[최종 PDF (WeasyPrint)];
+    G --> H[HTML 보고서 - Jinja2];
+    H --> I[최종 PDF - WeasyPrint];
 
 ```
 
