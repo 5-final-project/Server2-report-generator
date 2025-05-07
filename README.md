@@ -16,14 +16,15 @@
 
 ```mermaid
 graph TD
-    A[STT 결과 (txt/jsonl)] -->|청크 분할| B(영어 청크)
-    B -->|Qwen 번역| C(한국어 청크)
-    C -->|요약 및 유사 문서 검색 (Gemini)| D[요약 + 관련 문서]
-    C -->|문서 점수 기반 검색 (벡터 DB)| E(추가 문서)
-    D & E --> F[전체 관련 문서]
-    F & D -->|Qwen function-call| G(보고서 JSON)
-    G -->|Jinja2 템플릿| H(HTML)
-    H -->|WeasyPrint| I(PDF)
+    A[STT 결과 (txt 또는 jsonl)] -->|청크 분할| B[영어 청크]
+    B -->|Qwen 번역| C[한국어 청크]
+    C -->|요약 및 문서 검색 - Gemini| D[요약 및 유사 문서]
+    C -->|벡터 검색 - Vector DB| E[추가 문서]
+    D --> F[관련 문서 집합]
+    E --> F
+    F -->|Function-call 호출| G[보고서 JSON 생성]
+    G -->|Jinja2 템플릿| H[HTML 보고서]
+    H -->|WeasyPrint 변환| I[최종 PDF]
 ```
 
 - Qwen 3-8B GGUF 모델: 번역 및 JSON 보고서 생성 담당 (function-call 기반)
