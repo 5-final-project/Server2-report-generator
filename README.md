@@ -15,6 +15,10 @@
 ## 시스템 구조
 
 ```mermaid
+  info
+``
+
+```mermaid
 graph TD;
     A[STT 결과 (txt 또는 jsonl)] -->|청크 분할| B[영어 청크];
     B -->|Qwen 번역| C[한국어 청크];
