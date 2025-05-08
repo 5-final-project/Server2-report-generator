@@ -1,10 +1,9 @@
-secrets:                       # Compose-native secrets
-  pipeline_api:
-    file: ./secrets/pipeline_api
-  llm_api:                     # ← 추가: LLM 엔드포인트
-    file: ./secrets/llm_api
-  api_key:
-    file: ./secrets/api_key
+version: "3.9"
+
+secrets:
+  pipeline_api: { file: ./secrets/pipeline_api }
+  llm_api:      { file: ./secrets/llm_api }   # Google Gemini 엔드포인트
+  api_key:      { file: ./secrets/api_key }   # Google API-Key
 
 services:
   reportgen:
@@ -12,25 +11,26 @@ services:
       context: .
       dockerfile: docker/Dockerfile
 
-    # 입력·출력 디렉터리 마운트
-    volumes:
-      - ./data:/opt/app/data:ro    # STT 입력
-      - ./out:/opt/app/out         # PDF 출력
+    ports:
+      - "8000:8000"          # FastAPI / Swagger
 
-    # 시크릿 마운트
+    # 입력·출력 디렉터리
+    volumes:
+      - ./data:/opt/app/data:ro    # STT 원문
+      - ./out:/opt/app/out         # HTML / PDF 결과
+
+    # Docker Secrets
     secrets:
       - pipeline_api
-      - llm_api        # ← 추가
+      - llm_api
       - api_key
-
-    # DNS 서버 지정(외부 도메인 name-resolution 안정화)
-    dns:
-      - 8.8.8.8    # Google Public DNS
-      - 1.1.1.1    # Cloudflare DNS
-
-    # host.docker.internal 별칭(Windows/macOS 호스트 접근)
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
     environment:
       PYTHONUNBUFFERED: "1"
+
+    # DNS / host.docker.internal (Windows / macOS)
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

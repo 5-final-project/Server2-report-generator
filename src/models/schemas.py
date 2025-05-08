@@ -1,61 +1,67 @@
-# src/models/schemas.py
-# ────────────────────────────────────────────────────────────
-"""Pydantic 데이터 스키마 정의"""
+"""
+src/models/schemas.py
+────────────────────────────────────────────────────────────
+• 허브-API 입력(JSON) → PipelineRequest
+• 보고서 내부 사용 모델 → ReportSchema
+"""
 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional
 
 from pydantic import BaseModel, Field
 
+# ──────────────── ⓐ  파이프라인(JSON) 입력용  ────────────────
+class MeetingMeta(BaseModel):
+    title: str
+    datetime: datetime
+    author: str
+    participants: List[str]
 
-# ────────────────────────────────────────────────────────────
-class SearchDoc(BaseModel):
-    """벡터 탐색/유사 문서 결과 1건"""
+
+class RelatedDoc(BaseModel):
     page_content: str
     metadata: Dict[str, str]
     score: Optional[float] = None
 
 
-# ────────────────────────────────────────────────────────────
-class MeetingMeta(BaseModel):
-    """회의 기본 정보(머리글)"""
-    title: str = Field(..., max_length=200)
-    datetime: datetime | str                # ISO-8601 문자열도 허용
-    author: str
-    participants: List[str]
+class Chunk(BaseModel):
+    chunk_en: str
+    related_docs: List[RelatedDoc]
 
 
-# ────────────────────────────────────────────────────────────
-class PipelineResponse(BaseModel):
-    """
-    단일 Pipeline API 응답 스키마
-    (sample_pipeline.json 과 동일 구조)
-    """
+class PipelineRequest(BaseModel):
     meeting_meta: MeetingMeta
     meeting_purpose: str
-    insights: List[str]                     # = 핵심 인사이트(주요 논의 내용)
-    text_stt: str                           # STT 원문(영어)
-    all_documents: List[SearchDoc]          # 사내 문서 컨텍스트
-
-    # 선택 필드
-    chunks: Optional[List[Dict[str, Any]]] = None
-    elapsed_time: Optional[float] = None
+    insights: List[str]
+    text_stt: str
+    chunks: List[Chunk]
+    all_documents: List[RelatedDoc]
+    elapsed_time: float
     error: Optional[str] = None
 
 
-# ────────────────────────────────────────────────────────────
+# ──────────────── ⓑ  ReportBuilder 가 참조하는 타입  ──────────
+class SearchDoc(BaseModel):
+    """
+    report_builder.py 의 `docs: list[SearchDoc]` 파라미터와
+    하위 processor 들이 그대로 사용 중이므로 유지.
+    실제 구조는 RelatedDoc 과 동일하지만
+    호환성을 위해 별도 이름으로 남겨둔다.
+    """
+    page_content: str
+    metadata: Dict[str, str]
+    score: Optional[float] = None
+
+
+# ──────────────── ⓒ  최종 보고서 모델  ──────────────────────
 class ReportSchema(BaseModel):
-    """
-    최종 회의 보고서(JSON) 스키마  
-    Gemini 결과 → Pydantic 검증 → HTML/PDF 렌더링에 사용
-    """
     meeting_title: str = Field(..., max_length=200)
     executive_summary: str
 
-    agenda_keypoints: List[str]             # 주요 논의(=핵심 인사이트)
-    decisions: List[str] = []
-    action_items: List[str] = []
-    risks: List[str] = []
-    appendix: List[str] = []
+    agenda_keypoints: List[str]
+    decisions: List[str]
+    action_items: List[str]
+    risks: List[str]
+    appendix: List[str]
