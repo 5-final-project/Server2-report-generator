@@ -77,13 +77,11 @@ docker compose up
 ```
 
 * Swagger UI → [http://localhost:8000/docs](http://localhost:8000/docs)
-* **POST `/report`**
+* **POST `/report-json`**
 
 | 필드              | 타입                          | 설명                     |
 | --------------- | --------------------------- | ---------------------- |
-| `pipeline_json` | `file` *(application/json)* | 위 명세에 맞는 파이프라인 JSON    |
-| `clusters`      | int                         | (옵션) 클러스터 수, 기본 5      |
-| `top_k`         | int                         | (옵션) 문서 검색 Top-K, 기본 5 |
+| `payload`       | JSON 객체                     | 허브-API 파이프라인 JSON     |
 
 응답 예
 
