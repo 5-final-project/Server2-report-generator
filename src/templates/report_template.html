@@ -1,57 +1,46 @@
 <!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<title>{{ report.meeting_title }}</title>
+<meta charset="UTF-8">
+<title>{{ meta.title }}</title>
 <style>
-body { font-family: "Noto Sans KR", sans-serif; margin: 2rem; line-height: 1.6; }
-h1, h2 { margin-top: 0; }
-.page-break { page-break-after: always; }
+ body { font-family: "Noto Sans CJK KR", sans-serif; line-height:1.6; }
+ h1,h2 { color:#003366; margin-top:1.2em; }
+ table.meta { border-collapse:collapse; margin-bottom:1.5em; }
+ table.meta td { padding:4px 8px; border:1px solid #777; }
+ ul { margin:0 0 1em 1.1em; }
 </style>
-</head>
-<body>
 
-<h1>{{ report.meeting_title }}</h1>
+<h1>회의록</h1>
 
-<h2>Executive Summary</h2>
-<p>{{ report.executive_summary }}</p>
+<table class="meta">
+  <tr><td><b>회의 제목</b></td><td>{{ meta.title }}</td></tr>
+  <tr><td><b>일시</b></td><td>{{ meta.datetime }}</td></tr>
+  <tr><td><b>작성자</b></td><td>{{ meta.author }}</td></tr>
+  <tr><td><b>참석자</b></td><td>{{ ', '.join(meta.participants) }}</td></tr>
+</table>
 
-<h2>Agenda Key Points</h2>
+<h2>1. 회의 목적</h2>
+<p>{{ purpose }}</p>
+
+<h2>2. 주요 논의 내용</h2>
+<ul>{% for item in insights %}
+  <li>{{ item }}</li>{% endfor %}
+</ul>
+
+<h2>3. 회의 내용 요약</h2>
+<p>{{ summary }}</p>
+
+<h2>4. 액션 아이템</h2>
+<ul>{% for a in actions %}
+  <li>{{ a }}</li>{% endfor %}
+</ul>
+
+<h2>5. 회의 + 문서 통합 분석 요약</h2>
+<p>{{ analysis }}</p>
+
+<h2>6. 관련 사내 문서</h2>
 <ol>
-  {% for p in report.agenda_keypoints %}
-  <li>{{ p }}</li>
-  {% endfor %}
+{% for doc in documents %}
+  <li><b>{{ doc.metadata.doc_name }}</b> (score: {{ '%.2f'|format(doc.score or 0) }})<br>
+      {{ doc.page_content[:400] }}…</li>
+{% endfor %}
 </ol>
-
-<h2>Decisions</h2>
-<ul>
-  {% for d in report.decisions %}
-  <li>{{ d }}</li>
-  {% endfor %}
-</ul>
-
-<h2>Action Items</h2>
-<ul>
-  {% for a in report.action_items %}
-  <li>{{ a }}</li>
-  {% endfor %}
-</ul>
-
-<h2>Risks & Mitigations</h2>
-<ul>
-  {% for r in report.risks %}
-  <li>{{ r }}</li>
-  {% endfor %}
-</ul>
-
-<div class="page-break"></div>
-
-<h2>Appendix – Source Documents</h2>
-<ol>
-  {% for doc in report.appendix %}
-  <li>{{ doc }}</li>
-  {% endfor %}
-</ol>
-
-</body>
-</html>

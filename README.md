@@ -1,119 +1,91 @@
-# Meeting Report Generator
+## ✨ Meeting-Report Pipeline
 
-회의 음성(STT) → 벡터 검색(RAG) → 핵심 인사이트 → **PDF 보고서**를 자동 생성하는 파이프라인.
-
-- 음성 STT 텍스트 변환
-- 한국어 번역
-- 요약 및 관련 문서 검색
-- 핵심 인사이트 정리
-- HTML 및 PDF 보고서 생성
-
-모든 프로세스는 로컬 컨테이너 기반으로 작동하며, 별도 서버나 클라우드 의존 없이 내부망에서도 실행 가능하다.
+자동으로 **영문 회의 STT → 한국어 요약 + 액션 아이템 + 문서-통합 분석 → HTML · PDF** 보고서를 만들어 주는 파이프라인입니다.
+Google Gemini 1.5 Flash API를 사용해 요약과 분석을 수행하며, 실제 운영 중에는 단일 **Pipeline API**(사내 “허브”)가 모든 입력 데이터를 한 번에 반환합니다. 로컬 테스트를 위해서는 더미 JSON( `data/sample_pipeline.json` )을 사용해 동작을 검증할 수 있습니다.
 
 ---
 
-## 시스템 구조
-
-```mermaid
-graph TD;
-    A[STT 결과 (txt 또는 jsonl)] -->|청크 분할| B[영어 청크];
-    B -->|Qwen 번역| C[한국어 청크];
-    C -->|요약 및 문서 검색 - Gemini| D[요약 및 유사 문서];
-    C -->|벡터 검색 - Vector DB| E[추가 문서];
-    D --> F[관련 문서 집합];
-    E --> F;
-    F -->|Function-call 호출| G[보고서 JSON 생성];
-    G -->|Jinja2 템플릿| H[HTML 보고서];
-    H -->|WeasyPrint 변환| I[최종 PDF];
-```
-
-- Qwen 3-8B GGUF 모델: 번역 및 JSON 보고서 생성 담당 (function-call 기반)
-- Gemini 2.5: 문서 요약 및 관련 문서 검색 (Sentence-E5 임베딩 기반)
-- LangChain + FAISS: 임베딩 벡터 기반 문서 검색 API
-- WeasyPrint: HTML 템플릿 기반 PDF 생성
-
----
-
-## 디렉토리 구성
+### 🗂️ 폴더 구조
 
 ```
-.
-├── data/                  # 입력 STT 파일 (.txt or .jsonl)
-├── out/                   # 생성된 PDF 저장 위치
-├── secrets/               # API 엔드포인트 설정
-│   ├── api_key            # 인증 키 (필요시 사용)
-│   ├── chunk_api          # 청크 요약 API 주소
-│   ├── vector_api         # 벡터 검색 API 주소
-│   └── llm_api            # Qwen API 주소
-├── config/
-│   ├── settings.py        # 환경변수 설정 (Pydantic 기반)
-│   └── logging.yaml       # 로그 출력 설정
-├── src/
-│   ├── api_clients/       # 외부 API 연동 모듈
-│   ├── processors/        # 주요 기능 로직 (번역, 요약, 보고서 생성 등)
-│   ├── models/            # 데이터 스키마 정의
-│   └── templates/
-│       └── report_template.html  # HTML 기반 보고서 템플릿
-├── docker/
-│   ├── Dockerfile         # Python + WeasyPrint 환경 구성
-│   └── entrypoint.sh
-├── docker-compose.yml     # 실행 환경 정의
-├── requirements.txt       # 패키지 목록
-└── README.md
+report/
+├─ docker/                 # 빌드·런타임 Dockerfile, entrypoint
+├─ secrets/                # Docker-native 시크릿 (api_key, pipeline_api)
+├─ data/                   # STT 텍스트 · 테스트용 sample_pipeline.json
+├─ out/                    # HTML / PDF 결과물이 저장되는 위치
+├─ config/
+│  ├─ logging.yaml         # RichHandler 콘솔 로그 설정
+│  └─ settings.py          # Pydantic 설정 & 시크릿 로드
+├─ src/
+│  ├─ cli.py               # ★ 메인 엔트리 포인트
+│  ├─ api_clients/         # PipelineClient · GeminiClient · BaseClient
+│  ├─ processors/          # Summary / Action / IntegratedAnalysis / ReportBuilder
+│  ├─ models/              # Pydantic Schemas & Enums
+│  └─ templates/           # Jinja2 HTML 템플릿 (report_template.html)
+└─ requirements.txt
 ```
 
 ---
 
-## 실행 방법
+### ⚙️ 사전 준비
 
-### 1. 저장소 클론
-```bash
-git clone https://github.com/5-final-project/Server2-report-generator.git
-cd Server2-report-generator
-```
+| 항목                   | 설명                                                            |
+| -------------------- | ------------------------------------------------------------- |
+| **Python 3.11-slim** | Dockerfile 내에서 자동 설치                                          |
+| **Google API Key**   | `secrets/api_key` 파일(시크릿) – 40+ 자                             |
+| **Pipeline API URL** | `secrets/pipeline_api` 파일 – 예) `https://pipeline.ap.loclx.io` |
+| **Docker Desktop**   | `docker compose` 실행용                                          |
 
-### 2. 시크릿 설정
-```bash
-echo "" > secrets/api_key
-echo "https://chunk5.ap.loclx.io" > secrets/chunk_api
-echo "https://vector.ap.loclx.io" > secrets/vector_api
-echo "https://qwen.ap.loclx.io"   > secrets/llm_api
-```
+> **TIP** 단일 API가 아직 준비되지 않았다면 `data/sample_pipeline.json` 더미를 사용해 자동 fallback 됩니다.
 
-### 3. STT 텍스트 파일 준비
-```bash
-cp my_meeting.txt data/sample_meeting.txt
-# 또는 JSONL 형식도 지원
-```
+---
 
-### 4. 컨테이너 실행
-```bash
-docker compose up --build
-# 생성된 PDF는 out/report.pdf 에 저장됨
-```
+### 🚀 빌드 & 실행
 
-### 5. 선택 실행 (명령어로 직접 실행할 경우)
 ```bash
+# 1) Docker 이미지 빌드
+docker compose build
+
+# 2) 보고서 생성
+#    - STT 원문(txt) 를 data/ 로 두고, 출력 PDF 경로 지정
 docker compose run --rm reportgen \
-  --stt data/sample_meeting.txt \
-  --out out/my_report.pdf
+    python -m src.cli \
+      --stt ./data/meeting_stt.txt \
+      --out ./out/report.pdf
 ```
 
----
+실행 과정
 
-## 사용 기술 요약
-
-| 목적                 | 기술 스택                              |
-|----------------------|-----------------------------------------|
-| 번역 및 보고서 생성  | Qwen 3-8B GGUF (function-call 기반)     |
-| 요약 및 유사 문서 검색 | Gemini 2.5 Flash + Sentence-E5 임베딩  |
-| 벡터 기반 검색        | LangChain + FAISS                      |
-| PDF 생성             | Jinja2 템플릿 + WeasyPrint             |
-| 컨테이너 환경         | Python 3.11-slim + Docker Compose       |
+1. **Pipeline API 호출** → 회의 메타, 목적, 주요 논의, STT 청크+문서 컨텍스트 수신
+   `404` 이면 `sample_pipeline.json` 로드
+2. **Gemini 요약·액션·통합 분석**(한국어)
+3. **ReportSchema** 조립 → Jinja2 `report_template.html` 렌더
+4. **WeasyPrint** 로 **PDF + HTML** 저장 (`out/` 폴더)
+5. 콘솔 로그는 `config/logging.yaml` 설정에 따라 Rich 포맷으로 출력
 
 ---
 
-## 참고 사항
+### 🛠️ 개발자 가이드
 
-- 모든 서비스는 REST API 형태로 연동되며, 구성 요소는 독립적으로 대체 가능함
-- 외부 네트워크가 불안정한 경우 로컬 fallback 처리 로직이 포함되어 있음
+| 작업          | 위치 / 설명                                                          |
+| ----------- | ---------------------------------------------------------------- |
+| **새 모델 연동** | `src/api_clients/` 에 Client 추가 후 프로세서 주입                         |
+| **템플릿 수정**  | `src/templates/report_template.html` – Tailwind CDN 포함           |
+| **폰트 교체**   | `src/templates/fonts/pretendard.css` 경로 수정 또는 다른 Noto Sans KR 추가 |
+| **로그 레벨**   | `config/logging.yaml` `src:` 로거 레벨을 DEBUG/INFO 조정                |
+
+---
+
+### ❓ FAQ
+
+| Q                       | A                                                            |
+| ----------------------- | ------------------------------------------------------------ |
+| **한글이 PDF에서 안 보여요**     | Pretendard Subset TTF를 템플릿에 임베드하고 `@font-face` 로 선언해 해결했습니다. |
+| **Gemini API 호출 실패 시?** | 즉시 RuntimeError 로 중단해 더미 응답을 쓰지 않습니다.                        |
+| **Pipeline API가 다운이면?** | `404` 검출 후 `data/sample_pipeline.json` 더미를 자동 로드합니다.         |
+
+---
+
+### © License
+
+사내 PoC 용도로만 사용. 외부 배포 금지.

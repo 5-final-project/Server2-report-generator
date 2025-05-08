@@ -1,27 +1,26 @@
 version: 1
 
-# ─ 개별 라이브러리 로그 억제 ──────────────────────────────
-loggers:
-  httpx:               { level: WARNING, propagate: false }
-  httpcore:            { level: WARNING, propagate: false }
-  fontTools.subset:    { level: WARNING, propagate: false }
-  weasyprint:          { level: INFO,    propagate: false }   # PDF 생성 과정 INFO까지만
-
-# ─ 핸들러 ────────────────────────────────────────────────
+# ──────────────── 콘솔 핸들러 ────────────────
 handlers:
   console:
     class: rich.logging.RichHandler
-    level: DEBUG                # DEBUG 허용
+    level: DEBUG                      # DEBUG 허용
     rich_tracebacks: true
     markup: true
     log_time_format: "%Y-%m-%d %H:%M:%S"
 
-# ─ root 로거 ────────────────────────────────────────────
-root:
-  level: INFO                   # root는 INFO로 낮춰 불필요한 DEBUG 차단
-  handlers: [console]
-
-# ─ 우리 코드 패키지별 DEBUG 허용 ───────────────────────
-  # 필요하면 추가
+# ──────────────── 로거 설정 ─────────────────
 loggers:
-  src: { level: DEBUG }
+  # 제3-자 라이브러리 ― 너무 시끄러운 DEBUG 억제
+  httpx:            { level: WARNING, propagate: false, handlers: [console] }
+  httpcore:         { level: WARNING, propagate: false, handlers: [console] }
+  fontTools.subset: { level: WARNING, propagate: false, handlers: [console] }
+  weasyprint:       { level: INFO,    propagate: false, handlers: [console] }
+
+  # 우리 앱 소스는 DEBUG 까지 출력
+  src:              { level: DEBUG,   propagate: true,  handlers: [console] }
+
+# ──────────────── 루트 로거 ─────────────────
+root:
+  level: INFO                          # 기본은 INFO
+  handlers: [console]
