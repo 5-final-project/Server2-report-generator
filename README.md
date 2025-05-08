@@ -3,6 +3,9 @@
 “영문 STT → 한국어 보고서”를 **단 한 번의 HTTP 요청**으로 끝내는 파이프라인입니다.
 Google Gemini 1.5 Flash로 요약·액션·통합 분석을 수행하고, 결과를 **HTML + PDF**로 만들며 FastAPI Swagger( `/docs` )로도 호출할 수 있습니다.
 
+AIzaSyCRpTxu3FRgreewYtzoQ4-tINkkf6jaWzU
+https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest
+https://pipeline.ap.loclx.io
 ---
 
 ### 🗂️ 구조 한눈에 보기
