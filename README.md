@@ -77,20 +77,24 @@ docker compose up
 ```
 
 * Swagger UI → [http://localhost:8000/docs](http://localhost:8000/docs)
+
+#### 엔드포인트 1: HTML 보고서 반환
 * **POST `/report-json`**
 
 | 필드              | 타입                          | 설명                     |
 | --------------- | --------------------------- | ---------------------- |
 | `payload`       | JSON 객체                     | 허브-API 파이프라인 JSON     |
 
-응답 예
+응답: HTML 콘텐츠 (브라우저에서 바로 볼 수 있음)
 
-```json
-{
-  "html": "/opt/app/out/report.html",
-  "pdf":  "/opt/app/out/report.pdf"
-}
-```
+#### 엔드포인트 2: PDF 보고서 다운로드
+* **POST `/report-pdf`**
+
+| 필드              | 타입                          | 설명                     |
+| --------------- | --------------------------- | ---------------------- |
+| `payload`       | JSON 객체                     | 허브-API 파이프라인 JSON     |
+
+응답: PDF 파일 (다운로드 가능한 형태)
 
 ---
 
