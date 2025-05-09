@@ -76,7 +76,7 @@ docker compose run --rm reportgen \
 docker compose up
 ```
 
-* Swagger UI → [http://localhost:8000/docs](http://localhost:8000/docs)
+* Swagger UI → [http://localhost:8124/docs](http://localhost:8124/docs)
 * **POST `/report-json`**
 
 | 필드              | 타입                          | 설명                     |
