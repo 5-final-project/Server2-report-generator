@@ -22,7 +22,7 @@
 <p>{{ purpose }}</p>
 
 <h2>2. 주요 논의 내용</h2>
-<ul>{% for item in insights %}
+<ul>{% for item in agenda %}
   <li>{{ item }}</li>{% endfor %}
 </ul>
 
@@ -39,7 +39,7 @@
 
 <h2>6. 관련 사내 문서</h2>
 <ol>
-{% for doc in documents %}
+{% for doc in docs %}
   <li><b>{{ doc.metadata.doc_name }}</b> (score: {{ '%.2f'|format(doc.score or 0) }})<br>
       {{ doc.page_content[:400] }}…</li>
 {% endfor %}
